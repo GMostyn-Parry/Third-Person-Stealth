@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 9024758921874694103}
   - component: {fileID: 9024758921874694096}
   - component: {fileID: 9024758921874694097}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Left Wheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ GameObject:
   - component: {fileID: 9024758921941450395}
   - component: {fileID: 9024758921941450388}
   - component: {fileID: 9024758921941450389}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Goggles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -197,7 +197,7 @@ GameObject:
   - component: {fileID: 9024758922981933151}
   - component: {fileID: 9024758922981933122}
   - component: {fileID: 9024758922981933123}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -292,9 +292,9 @@ CharacterController:
   m_Enabled: 1
   serializedVersion: 2
   m_Height: 2
-  m_Radius: 0.5
+  m_Radius: 0.8
   m_SlopeLimit: 45
-  m_StepOffset: 0.45
+  m_StepOffset: 0.5
   m_SkinWidth: 0.0001
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
@@ -325,7 +325,7 @@ GameObject:
   - component: {fileID: 9024758923429447371}
   - component: {fileID: 9024758923429447364}
   - component: {fileID: 9024758923429447365}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Right Wheel
   m_TagString: Untagged
   m_Icon: {fileID: 0}

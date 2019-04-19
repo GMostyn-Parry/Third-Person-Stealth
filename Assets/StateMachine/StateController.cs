@@ -55,6 +55,7 @@ public class StateController : MonoBehaviour
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
 
+        //Print an error, if there is no starting waypoint for patrolling.
         Debug.Assert(currentPoint, "No initial patrol point set for: " + name);
     }
 
