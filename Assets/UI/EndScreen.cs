@@ -10,11 +10,11 @@ public class EndScreen : MonoBehaviour
 
     [SerializeField] private Canvas winControls = null; //Controls that are shown when the player succeeds.
     
-    public void SetFinishState(bool wasCaught, float timeToFinish)
+    public void SetFinishState(bool wasCaught, float timeBeforeEnd)
     {
         title.text = wasCaught ? "Failed To Escape" : "Successfully Escaped";
         //Display the time to finish to two decimal places.
-        timeDisplay.text = timeToFinish.ToString("f2") + "s";
+        timeDisplay.text = timeBeforeEnd.ToString("f2") + "s";
 
         winControls.gameObject.SetActive(!wasCaught);
     }

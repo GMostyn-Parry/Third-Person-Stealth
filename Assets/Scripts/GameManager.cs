@@ -7,59 +7,87 @@ public class GameManager : MonoBehaviour
 {
     public static bool IsPaused { get; private set; } //Whether the game is paused; should be used to prevent scripts updating while paused.
 
-    public string nextLevelName; //Name of the level to be loaded after this level.
+    public List<string> levelOrder; //List of names of the levels to be loaded, and the order they are in.
 
     [SerializeField] private Player player = null; //Instance the user is controlling.
-    [SerializeField] private EndScreen endScreen = null; //The screen that is shown when the level ends.
-    [SerializeField] private Canvas pauseScreen = null; //The screen that is shown when the game is paused.
+    [SerializeField] private GUIManager guiManager = null; //Reference to the mono behaviour that controls the GUI.
 
+    private bool isLevelFinished = false; //Whether the level has finished.
     private float levelTime = 0f; //Time level has been running.
+    private int levelOrderIndex; //Index of the level we are on from the levelOrder array.
 
     public void SetGamePaused(bool isPaused)
     {
-        SetGameDisabled(isPaused);
+        IsPaused = isPaused;
         SetCursorEnabled(isPaused);
-        pauseScreen.gameObject.SetActive(isPaused);
+
+        if(isPaused)
+        {
+            guiManager.ShowPauseScreen();
+        }
+        else
+        {
+            guiManager.HidePauseScreen();
+        }
     }
 
     public void EndLevel()
     {
-        SetGameDisabled(true);
+        IsPaused = true;
         SetCursorEnabled(true);
 
-        endScreen.SetFinishState(player.IsCaught, levelTime);
-        endScreen.gameObject.SetActive(true);
+        guiManager.ShowEndScreen(player.IsCaught, levelTime);
     }
 
     public void RestartLevel()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-        //Reset the time in level, as we have spent zero time in the restarted level.
-        levelTime = 0;
-
-        SetGamePaused(false);
+        StartCoroutine(LoadLevel(levelOrder[levelOrderIndex]));
     }
+
+    public void NextLevel()
+    {
+        //If we are at the last level, then we go to the first level.
+        levelOrderIndex = (levelOrderIndex + 1) % levelOrder.Count;
+
+        //Go to the next level in the level order array.
+        StartCoroutine(LoadLevel(levelOrder[levelOrderIndex]));
+    }    
 
     public void QuitGame()
     {
         Application.Quit();
     }
 
-    public void NextLevel()
-    {
-        SceneManager.LoadScene(nextLevelName);
-    }
-
     private void Start()
     {
         SetCursorEnabled(false);
         SetGamePaused(false);
+
+        if(SceneManager.sceneCount == 1)
+        {
+            LoadLevel(levelOrder[levelOrderIndex]);
+        }
+        else
+        {
+            string sceneName = SceneManager.GetActiveScene().name;
+
+            if(sceneName == "Game")
+            {
+                Debug.LogError("Scene 'Game' is active scene, set active scene to level.");
+            }
+            else
+            {
+                levelOrderIndex = levelOrder.IndexOf(sceneName);
+            }
+        }
+
+        FindPlayer(new Scene(), new LoadSceneMode());
     }
 
     private void Update()
     {
         //Toggle the pause state state, if we are not in the end state and the pause button was pressed.
-        if(!endScreen.isActiveAndEnabled && Input.GetButtonUp("Pause"))
+        if(!isLevelFinished && Input.GetButtonUp("Pause"))
         {
             SetGamePaused(!IsPaused);
         }
@@ -73,15 +101,31 @@ public class GameManager : MonoBehaviour
 
     private void OnEnable()
     {
+        SceneManager.sceneLoaded += FindPlayer;
+
         //Enable the end screen on the player reaching the finish area, or being caught.
         FinishArea.OnPlayerFinished += EndLevel;
-        player.OnCaught += EndLevel;
+
+        if(player)
+        {
+            player.OnCaught += EndLevel;
+            player.OnEnterInteract += guiManager.ShowContextDialog;
+            player.OnLeftInteract += guiManager.HideContextDialog;
+        }
     }
 
     private void OnDisable()
     {
+        SceneManager.sceneLoaded -= FindPlayer;
+
         FinishArea.OnPlayerFinished -= EndLevel;
-        player.OnCaught -= EndLevel;
+
+        if(player)
+        {
+            player.OnCaught -= EndLevel;
+            player.OnEnterInteract -= guiManager.ShowContextDialog;
+            player.OnLeftInteract -= guiManager.HideContextDialog;
+        }
     }
 
     private void SetCursorEnabled(bool isEnabled)
@@ -90,8 +134,30 @@ public class GameManager : MonoBehaviour
         Cursor.visible = isEnabled;
     }
 
-    private void SetGameDisabled(bool isDisabled)
+    private IEnumerator LoadLevel(string levelName)
     {
-        IsPaused = isDisabled;
+        guiManager.HideEndScreen();
+
+        //Store the index, so we aren't constantly requesting the active scene.
+        int currentBuildIndex = SceneManager.GetActiveScene().buildIndex;
+        yield return SceneManager.UnloadSceneAsync(currentBuildIndex);
+
+        yield return SceneManager.LoadSceneAsync(levelName, LoadSceneMode.Additive);
+
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName(levelName));
+
+        //Reset the time in level, as we have spent zero time in the new level.
+        levelTime = 0;
+
+        SetGamePaused(false);
+    }
+
+    private void FindPlayer(Scene scene, LoadSceneMode mode)
+    {
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+
+        player.OnCaught += EndLevel;
+        player.OnEnterInteract += guiManager.ShowContextDialog;
+        player.OnLeftInteract += guiManager.HideContextDialog;
     }
 }

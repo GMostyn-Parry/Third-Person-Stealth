@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Camera))]
 public class FreeCamera : MonoBehaviour
@@ -90,5 +91,20 @@ public class FreeCamera : MonoBehaviour
         }
 
         return nearCorners;
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += FindTarget;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= FindTarget;
+    }
+
+    private void FindTarget(Scene scene, LoadSceneMode mode)
+    {
+        target = GameObject.FindGameObjectWithTag("Player").transform;
     }
 }
