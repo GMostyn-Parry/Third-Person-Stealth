@@ -1,5 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
+//Class that moves the game object out of the way, when all linked toggles are in the desired state.
 public class Door : Toggleable
 {
     public Toggleable[] requiredActivated; //The toggles that must be activated for the door to be open.
@@ -10,6 +12,33 @@ public class Door : Toggleable
     private Vector3 closedPosition; //The position of the door when it is closed.
     private Vector3 openPosition; //The position of the door when it is open.
 
+    private Coroutine slideCoroutine; //Reference to the coroutine that moves the door.
+    
+    //Move the door to the open position.
+    protected override void OnSelfActivated()
+    {
+        //End the coroutine if it is running, before restarting it with the new value.
+        if(slideCoroutine != null)
+        {
+            StopCoroutine(slideCoroutine);
+        }
+
+        slideCoroutine = StartCoroutine(SlideToPosition(openPosition));
+    }
+
+    //Move the door to the closed position.
+    protected override void OnSelfDeactivated()
+    {
+        //End the coroutine if it is running, before restarting it with the new value.
+        if(slideCoroutine != null)
+        {
+            //Restart the coroutine with the new desired value.
+            StopCoroutine(slideCoroutine);
+        }
+
+        slideCoroutine = StartCoroutine(SlideToPosition(closedPosition));
+    }
+
     private void Start()
     {
         //The starting position is the door's closed position.
@@ -18,46 +47,57 @@ public class Door : Toggleable
         openPosition = transform.position + new Vector3(transform.localScale.x - 0.01f, 0, 0);
     }
 
-    private void Update()
-    {
-        //Move the door via interpolation between the closed position and open position; only has an effect when the toggle is changed.
-        transform.position = Vector3.Lerp(transform.position, IsActive ? openPosition : closedPosition, moveDamping * Time.deltaTime);
-    }
-
     //Add functions to events of linked toggles to control when the door is open, and closed.
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
+
         foreach(Toggleable toggleable in requiredActivated)
         {
-            toggleable.OnActivated += CheckAndOpen;
-            toggleable.OnDeactivated += CheckAndClose;
+            toggleable.OnActivated += OnToggleEnteredDesiredState;
+            toggleable.OnDeactivated += OnToggleEnteredWrongState;
         }
 
         foreach(Toggleable toggleable in requiredDeactivated)
         {
-            toggleable.OnActivated += CheckAndClose;
-            toggleable.OnDeactivated += CheckAndOpen;
+            toggleable.OnActivated += OnToggleEnteredWrongState;
+            toggleable.OnDeactivated += OnToggleEnteredDesiredState;
         }
     }
 
     //Removed functions from events of linked toggles when the door is disabled.
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
+
         foreach(Toggleable toggleable in requiredActivated)
         {
-            toggleable.OnActivated -= CheckAndOpen;
-            toggleable.OnDeactivated -= CheckAndClose;
+            toggleable.OnActivated -= OnToggleEnteredDesiredState;
+            toggleable.OnDeactivated -= OnToggleEnteredWrongState;
         }
 
         foreach(Toggleable toggleable in requiredDeactivated)
         {
-            toggleable.OnActivated -= CheckAndClose;
-            toggleable.OnDeactivated -= CheckAndOpen;
+            toggleable.OnActivated -= OnToggleEnteredWrongState;
+            toggleable.OnDeactivated -= OnToggleEnteredDesiredState;
         }
     }
 
-    //Opens the door, if the current state determines it should be open.
-    private void CheckAndOpen()
+    //Move the door via interpolation to the new position.
+    private IEnumerator SlideToPosition(Vector3 newPosition)
+    {
+        //Continue moving the door while it has not reached the position.
+        while(Vector3.Distance(transform.position, newPosition) > 0.01)
+        {
+            yield return transform.position = Vector3.Lerp(transform.position, newPosition, moveDamping * Time.deltaTime);
+        }
+
+        //Ensure the door ends up in the correct position.
+        transform.position = newPosition;
+    }
+
+    //Checks if all toggles have entered the desired state, and opens the door, if they have done so.
+    private void OnToggleEnteredDesiredState()
     {
         //Doesn't open the door if any of the toggles that must be active aren't active.
         foreach(Toggleable toggleable in requiredActivated)
@@ -70,18 +110,14 @@ public class Door : Toggleable
         {
             if(toggleable.IsActive) return;
         }
-
-        Activate();
+        
+        IsActive = true;
     }
 
     //Closes the door, if is is already open.
     //All linked toggles must be in the correct state for the door to open; thus if an event calls this function, then the door should be closed.
-    private void CheckAndClose()
+    private void OnToggleEnteredWrongState()
     {
-        //We check if it is active first to stop the OnDeactivated event being called unnecessarily for this door.
-        if(IsActive)
-        {
-            Deactivate();
-        }
+        IsActive = false;
     }
 }

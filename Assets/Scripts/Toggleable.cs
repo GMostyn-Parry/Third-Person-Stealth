@@ -1,39 +1,56 @@
 ﻿using UnityEngine;
 
-//For objects that have a toggleable state, i.e. buttons, locks, lights, etc.
+//Abstract class for objects that have a toggleable state, i.e. buttons, locks, lights, etc.
 //Not an interface, so it can be used to type objects for the inspector.
 public abstract class Toggleable : MonoBehaviour
 {
     public delegate void Activated();
-    public event Activated OnActivated;
+    public event Activated OnActivated; //Called when the toggle changes to the active state.
 
     public delegate void Deactivated();
-    public event Deactivated OnDeactivated;
+    public event Deactivated OnDeactivated; //Called when the toggle changes to the inactive state.
 
-    public bool IsActive { get; protected set; } = false;
-
-    public virtual void Toggle()
+    private bool _isActive;
+    public bool IsActive //The state of the toggle; emits an event when activated, or deactivated.
     {
-        //Deactivate the toggle, if it was active.
-        if(IsActive)
+        get
         {
-            Deactivate();
+            return _isActive;
         }
-        else
+
+        set
         {
-            Activate();
+            //Don't emit the events if we were already in this state.
+            if(_isActive == value) return;
+
+            _isActive = value;
+
+            //Emit the event depending on the new state.
+            if(value)
+            {
+                OnActivated?.Invoke();
+            }
+            else
+            {
+                OnDeactivated?.Invoke();
+            }
         }
     }
 
-    public virtual void Activate()
+    //Called when the object is activated.
+    protected abstract void OnSelfActivated();
+    //Called when the object is deactivated.
+    protected abstract void OnSelfDeactivated();
+
+    protected virtual void OnEnable()
     {
-        IsActive = true;
-        OnActivated?.Invoke();
+        OnActivated += OnSelfActivated;
+        OnDeactivated += OnSelfDeactivated;
     }
 
-    public virtual void Deactivate()
+    protected virtual void OnDisable()
     {
-        IsActive = false;
-        OnDeactivated?.Invoke();
+        OnActivated -= OnSelfActivated;
+        OnDeactivated -= OnSelfDeactivated;
     }
 }

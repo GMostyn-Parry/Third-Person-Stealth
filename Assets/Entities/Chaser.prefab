@@ -225,5 +225,4 @@ MonoBehaviour:
   stats: {fileID: 11400000, guid: e2cb16fb9f8279a49bb01c065c0343bb, type: 2}
   currentPoint: {fileID: 0}
   navMeshAgent: {fileID: 0}
-  desiredPosition: {x: 0, y: 0, z: 0}
-  currentState: {fileID: 11400000, guid: d3987850bfaac5445badde64bde54ec8, type: 2}
+  currentState: {fileID: 11400000, guid: b268cfb75c969054b9aa1e026bcc1dea, type: 2}

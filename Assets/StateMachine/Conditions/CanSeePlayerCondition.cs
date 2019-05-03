@@ -1,21 +1,20 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
+//Condition to check if the agent can see the player.
 [CreateAssetMenu(menuName = "StateMachine/Conditions/CanSeePlayer")]
 public class CanSeePlayerCondition : Condition
 {
     public override bool Evaluate(StateController controller)
     {
-        Vector3 direction = controller.target.transform.position - controller.transform.position;
+        Vector3 difference = controller.target.transform.position - controller.transform.position;
 
-        if(Vector3.Angle(direction, controller.transform.forward) <= controller.stats.maxVisionAngle)
+        //We can see the player if the angle is less than the max angle of the vision cone.
+        if(Vector3.Angle(difference, controller.transform.forward) <= controller.stats.maxVisionAngle)
         {
+            Physics.Raycast(controller.transform.position, difference, out RaycastHit hit);
 
-            RaycastHit hit;
-            Physics.Raycast(controller.transform.position, direction, out hit);
-
-            return hit.collider == true && hit.collider.gameObject == controller.target;
+            //Return true if we hit something, and it was the target.
+            return hit.collider != null && hit.collider.gameObject == controller.target;
         }
 
         return false;

@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
+//An action that moves the agent between connected patrol points.
 [CreateAssetMenu(menuName = "StateMachine/Actions/Patrol")]
 public class PatrolAction : Action
 {

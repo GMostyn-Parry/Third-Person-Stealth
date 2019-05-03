@@ -1,24 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
+//Toggle that turns itself, and its light, to green when the toggle is activated; and red when deactivated.
+[RequireComponent(typeof(Light))]
 public class LockLight : Toggleable
 {
-    private Light displayLight;
-    private Renderer render;
+    private Renderer render; //Renderer for the game object.
+    private Light displayLight; //The child light of the object.
 
-    public override void Activate()
+    //Object, and light, become green when activated.
+    protected override void OnSelfActivated()
     {
-        base.Activate();
-
         render.material.color = Color.green;
         displayLight.color = Color.green;
     }
 
-    public override void Deactivate()
+    //Object, and light, become red when deactivated.
+    protected override void OnSelfDeactivated()
     {
-        base.Deactivate();
-
         render.material.color = Color.red;
         displayLight.color = Color.red;
     }
@@ -26,7 +24,6 @@ public class LockLight : Toggleable
     private void Start()
     {
         render = GetComponent<Renderer>();
-        //Assumes there is only one child light.
-        displayLight = GetComponentInChildren<Light>();
+        displayLight = GetComponent<Light>();
     }
 }

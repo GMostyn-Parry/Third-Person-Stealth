@@ -9,6 +9,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 121be4f2d4c58584baf176f95fea37d7, type: 3}
-  m_Name: AtPositionCondition
+  m_Script: {fileID: 11500000, guid: 885922975372f154a9b2a54a5953c3c1, type: 3}
+  m_Name: RecordAction
   m_EditorClassIdentifier: 

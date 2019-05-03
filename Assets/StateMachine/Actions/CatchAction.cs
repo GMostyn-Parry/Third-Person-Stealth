@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+//An action that catches the player if they are close enough to the agent.
 [CreateAssetMenu(menuName = "StateMachine/Actions/Catch")]
 public class CatchAction : Action
 {

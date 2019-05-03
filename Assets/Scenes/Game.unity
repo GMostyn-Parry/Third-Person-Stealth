@@ -223,7 +223,6 @@ MonoBehaviour:
   focusDistance: 50
   offset: {x: 1, y: 1}
   mouseSensitivity: {x: 3, y: 2}
-  collisionPadding: 0.1
 --- !u!1 &522344756
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,7 +445,6 @@ MonoBehaviour:
   levelOrder:
   - Level1
   - Level2
-  player: {fileID: 0}
   guiManager: {fileID: 522344757}
 --- !u!4 &4489445397911156939
 Transform:
@@ -738,6 +736,11 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 4489445397911156938}
+    - target: {fileID: 3270319634544023618, guid: c54038e05dfb1074287dc76c3c549907,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SetInPauseState
+      objectReference: {fileID: 0}
     - target: {fileID: 3270319634109661193, guid: c54038e05dfb1074287dc76c3c549907,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target

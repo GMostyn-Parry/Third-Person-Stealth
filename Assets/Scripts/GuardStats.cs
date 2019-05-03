@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+//ScriptableObject that stores data on the abilities of a guard.
 [CreateAssetMenu(menuName = "AI/GuardStats")]
 public class GuardStats : ScriptableObject
 {

@@ -1,36 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /*
+ * Class for the object moved by the player; affected by gravity, and can be caught.
+ * 
  * Movement expects the floor to always be Vector3.down.
  */
  [RequireComponent(typeof(CharacterController))]
 public class Player : MonoBehaviour
 {
     public delegate void Caught();
-    public event Caught OnCaught;
+    public event Caught OnCaught; //Event emitted when the player is caught.
 
     public delegate void EnterInteract(string toDisplay);
-    public event EnterInteract OnEnterInteract;
+    public event EnterInteract OnEnterInteract; //Event emitted when the player enters trigger of an interactable object, when it could not interact before.
 
     public delegate void LeftInteract();
-    public event LeftInteract OnLeftInteract;
+    public event LeftInteract OnLeftInteract; //Event emitted when the player leaves trigger of the last interactable object.
 
     public float moveSpeed = 10.0f; //How fast the player moves.
-    public float turnSpeed = 60.0f; //How fast the player turns.
-    public float gravity = 5.0f; //Force of gravity.
+    public float gravity = 5.0f; //Magnitude of gravity acting on player.
 
-    public bool IsCaught { get; private set; }
+    public bool IsCaught { get; private set; } //Whether the player has been caught.
 
     private CharacterController controller; //Movement controller for the player.
-    private Transform cameraTransform; //Transform of the camera used by the screen.
+    private Transform cameraTransform; //Transform of the camera that was being used when the level started.
 
     private List<IInteractable> nearInteractables = new List<IInteractable>(); //List of interactables the player is in-range to use.
 
+    //Called when the player is caught; prevents the player moving anymore, and signals the OnCaught event.
     public void Catch()
     {
         IsCaught = true;
-        Destroy(this);
         
         OnCaught();
     }
@@ -59,8 +61,8 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        //Don't move the player while the game is paused.
-        if(GameManager.IsPaused) return;
+        //Don't move the player while the game is paused, or they are caught.
+        if(GameManager.IsPaused || IsCaught) return;
 
 
         //Only allow the player to control movement when they're touching the ground.
