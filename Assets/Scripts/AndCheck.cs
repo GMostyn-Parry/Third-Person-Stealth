@@ -1,9 +1,7 @@
-﻿//A class that acts as a logical AND gate for toggles; activating the controlled toggles when all input toggles are in the correct state.
+﻿//A class that acts as a logical AND gate for toggles; activating the controlled toggles when all input toggles are in the active state.
 public class AndCheck : Toggle
 {
-    public Toggle[] requiredActivated; //The toggles that must be activated for the gate to be active.
-    public Toggle[] requiredDeactivated; //The toggles that must be deactivated for the gate to be active.
-
+    public Toggle[] inputToggles; //The toggles that must be activated for the gate to be set to active.
     public Toggle[] controlledToggles; //The toggles that will be matched to the state of the logic gate.
 
     //Sets the controlled toggles to true when the gate is activated.
@@ -24,63 +22,45 @@ public class AndCheck : Toggle
         }
     }
 
-    //Add functions to events of linked toggles to control when the gate is active, and deactive.
+    //Link functions to events of input toggles to control when the gate is active, and deactive.
     protected override void OnEnable()
     {
         base.OnEnable();
 
-        foreach(Toggle toggle in requiredActivated)
+        foreach(Toggle toggle in inputToggles)
         {
-            toggle.OnActivated += OnToggleEnteredDesiredState;
-            toggle.OnDeactivated += OnToggleEnteredWrongState;
-        }
-
-        foreach(Toggle toggle in requiredDeactivated)
-        {
-            toggle.OnActivated += OnToggleEnteredWrongState;
-            toggle.OnDeactivated += OnToggleEnteredDesiredState;
+            toggle.OnActivated += OnInputToggleActivated;
+            toggle.OnDeactivated += OnInputToggleDeactivated;
         }
     }
 
-    //Removed functions from events of linked toggles when the gate is active.
+    //Unlink functions to events of input toggles when the script is disabled.
     protected override void OnDisable()
     {
         base.OnDisable();
 
-        foreach(Toggle toggle in requiredActivated)
+        foreach(Toggle toggle in inputToggles)
         {
-            toggle.OnActivated -= OnToggleEnteredDesiredState;
-            toggle.OnDeactivated -= OnToggleEnteredWrongState;
-        }
-
-        foreach(Toggle toggle in requiredDeactivated)
-        {
-            toggle.OnActivated -= OnToggleEnteredWrongState;
-            toggle.OnDeactivated -= OnToggleEnteredDesiredState;
+            toggle.OnActivated -= OnInputToggleActivated;
+            toggle.OnDeactivated -= OnInputToggleDeactivated;
         }
     }
 
-    //Checks if all toggles have entered the desired state, and activates the gate, if they have done so.
-    private void OnToggleEnteredDesiredState()
+    //Checks if all toggles have entered the active state, and activates the gate, if they have done so.
+    private void OnInputToggleActivated()
     {
-        //Doesn't activate the gate if any of the toggles that must be active aren't active.
-        foreach(Toggle toggle in requiredActivated)
+        //Doesn't activate the gate if any of the toggles are inactive.
+        foreach(Toggle toggle in inputToggles)
         {
             if(!toggle.IsActive) return;
-        }
-
-        //Doesn't activate the gate if any of the toggles that shouldn't be active are active.
-        foreach(Toggle toggle in requiredDeactivated)
-        {
-            if(toggle.IsActive) return;
         }
 
         IsActive = true;
     }
 
-    //Deactivates the gate, if is is already open.
+    //Deactivates the gate.
     //All linked toggles must be in the correct state for the gate to be active; thus if an event calls this function, then the gate should be inactive.
-    private void OnToggleEnteredWrongState()
+    private void OnInputToggleDeactivated()
     {
         IsActive = false;
     }
