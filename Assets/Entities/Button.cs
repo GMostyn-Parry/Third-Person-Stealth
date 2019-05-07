@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 
 //A button that has its state toggled when it is interacted with, changing the colour to red.
-public class Button : Toggleable, IInteractable
+public class Button : Toggle, IInteractable
 {
-    public Toggleable[] connectedToggles; //The toggles this button will activate, and deactivate, on being toggled.
+    public Toggle[] controlledToggles; //The toggles that will be matched to the state of the button.
 
     [SerializeField] Renderer buttonRenderer = null; //The render for the button part of the object.
 
@@ -18,7 +18,7 @@ public class Button : Toggleable, IInteractable
     {
         buttonRenderer.material.color = Color.green;
 
-        foreach(Toggleable toggle in connectedToggles)
+        foreach(Toggle toggle in controlledToggles)
         {
             toggle.IsActive = true;
         }
@@ -29,7 +29,7 @@ public class Button : Toggleable, IInteractable
     {
         buttonRenderer.material.color = Color.red;
 
-        foreach(Toggleable toggle in connectedToggles)
+        foreach(Toggle toggle in controlledToggles)
         {
             toggle.IsActive = false;
         }

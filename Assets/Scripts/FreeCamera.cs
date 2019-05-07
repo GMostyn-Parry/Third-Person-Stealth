@@ -28,7 +28,7 @@ public class FreeCamera : MonoBehaviour
 
         //Set camera to collide with everything, but the player.
         collisionMask = ~0;
-        collisionMask = ~LayerMask.GetMask("Player");
+        collisionMask = ~LayerMask.GetMask("Ignore Raycast", "Player");
     }
 
     private void LateUpdate()
