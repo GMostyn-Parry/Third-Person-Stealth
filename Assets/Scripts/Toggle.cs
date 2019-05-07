@@ -2,7 +2,7 @@
 
 //Abstract class for objects that have a toggleable state, i.e. buttons, locks, lights, etc.
 //Not an interface, so it can be used to type objects for the inspector.
-public abstract class Toggleable : MonoBehaviour
+public abstract class Toggle : MonoBehaviour
 {
     public delegate void Activated();
     public event Activated OnActivated; //Called when the toggle changes to the active state.

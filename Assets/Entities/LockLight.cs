@@ -2,7 +2,7 @@
 
 //Toggle that turns itself, and its light, to green when the toggle is activated; and red when deactivated.
 [RequireComponent(typeof(Light))]
-public class LockLight : Toggleable
+public class LockLight : Toggle
 {
     private Renderer render; //Renderer for the game object.
     private Light displayLight; //The child light of the object.
