@@ -11,7 +11,7 @@ A basic "stealth" game demonstration project, using the Unity Engine, where the 
 **Finished:** 2019-05-03\
 **Last Compiled With:** Unity 2019.1.1f1.
 # Demonstration Video
-To be uploaded; hopefully before 2019-05-06.
+To be uploaded; by 2019-05-08.
 # Controls
 ```
 W - Forward
