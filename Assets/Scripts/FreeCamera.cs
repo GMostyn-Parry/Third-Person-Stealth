@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
-//Camera that follows just behind the target; only changing position and angle when input is passed by the user, or there is geometry blocking the way.
+//Camera that follows just behind the target, and only changes angle when input is passed by the user; or it has avoid shearing geometry, or the target.
 [RequireComponent(typeof(Camera))]
 public class FreeCamera : MonoBehaviour
 {
@@ -11,10 +11,11 @@ public class FreeCamera : MonoBehaviour
     public float maxPitch = 60f; //How much the camera can pitch.
     public float focusDistance = 50.0f; //How far forward to track past the target.
 
-    public Vector2 offset = Vector2.one; //How offset we want the target to appear.
-    public Vector2 mouseSensitivity = new Vector2(3, 2); //How fast the camera turns.
+    public Vector2 offset = new Vector2(1, 1); //How much we want to offset the target from the centre of the view.
+    public Vector2 mouseSensitivity = new Vector2(3, 2); //How fast the camera turns on mouse input.
 
-    [SerializeField] private readonly float collisionPadding = 0.1f; //How much clearance the camera has when colliding with walls.
+    [SerializeField] private readonly float collisionPadding = 0.1f; //How much clearance is added to avoid shearing geometry.
+    [SerializeField] private readonly float avoidHeight = 1.5f; //Height above the target's transform we move to, so we can avoid shearing the target when next to a wall.
 
     private float targetYaw; //The yaw of the camera the user has requested, and we are trying to match.
     private float targetPitch; //The pitch of the camera the user has requested, and we are trying to match.
@@ -41,32 +42,49 @@ public class FreeCamera : MonoBehaviour
         //Using transform.right seems to cause camera stutter, so I recreate the vector with the rotation quaternion instead.
         Vector3 desiredPosition = target.position + targetRotation * -Vector3.forward * radius + targetRotation * Vector3.right * offset.x + Vector3.up * offset.y;
 
-        //Set the camera to the position before collision.
+        //Set the camera to the position calculated before factoring collision.
         transform.position = desiredPosition;
         transform.LookAt(target.position + targetRotation * Vector3.forward * focusDistance);
 
         Vector3[] nearFrustrumCorners = GetNearPlaneCorners();
 
-        float minCollisionDistance = -1f; //Smallest distance that the collision occured.
-        Vector3 cornerDifference = new Vector3(); //Vector difference between corner collision was on, and the target.
+        //What we will subtract from the camera position to avoid shearing geometry.
+        Vector3 avoidDirection = Vector3.zero;
+        //The smallest collision distance from target to any of the frustrum corners.
+        float minCollisionDistance = radius + 1;
 
-        //Find the corner with the shortest distance before collision, out of all of the near view frustrum corners.
+        //Find the mininimum collision distance,
+        //and set the travel direction to a vector made from the largest components out of all avoidance vectors for the corners.
         foreach(Vector3 corner in nearFrustrumCorners)
         {
+            //Only perform calculation if a collision occured; we travel from the target to the corner, rather that vice versa,
+            //as there won't be a collision if the starting point is inside the offending geometry.
             if(Physics.Linecast(target.position, corner, out RaycastHit hit, collisionMask))
             {
-                if(minCollisionDistance == -1f || hit.distance < minCollisionDistance)
-                {
-                    minCollisionDistance = hit.distance;
-                    cornerDifference = corner - target.position;
-                }
+                //Vector difference between corner and the target's position.
+                Vector3 cornerDifference = corner - target.position;
+                //How much we need to move the camera along the vector difference to avoid shearing geometry.
+                Vector3 collisionAvoid = cornerDifference.normalized * (cornerDifference.magnitude - hit.distance + collisionPadding);
+
+                //Replace any component in avoidDirection that is smaller than the current avoidance vector.
+                if(Mathf.Abs(collisionAvoid.x) > Mathf.Abs(avoidDirection.x)) avoidDirection.x = collisionAvoid.x;
+                if(Mathf.Abs(collisionAvoid.y) > Mathf.Abs(avoidDirection.y)) avoidDirection.y = collisionAvoid.y;
+                if(Mathf.Abs(collisionAvoid.z) > Mathf.Abs(avoidDirection.z)) avoidDirection.z = collisionAvoid.z;
+
+                //Update minCollisionDistance if the new hit distance was smaller than the current value.
+                if(hit.distance < minCollisionDistance) minCollisionDistance = hit.distance;
             }
         }
 
-        //Move the camera, along the direction between the target and the colliding corner, to avoid the collision, if there was a collision.
-        if(minCollisionDistance != -1f)
+        //Move the camera to avoid the collision, if there was a collision.
+        if(avoidDirection != Vector3.zero)
         {
-            transform.position -= cornerDifference.normalized * (cornerDifference.magnitude - minCollisionDistance + collisionPadding);
+            //We subtract because the linecasts were from the target to the camera corners, rather than vice versa.
+            transform.position -= avoidDirection;
+
+            //We interpolate between the current height and the height to avoid shearing the target, based on how close we are to the colliding geometry.
+            Vector3 squeezePosition = new Vector3(transform.position.x, target.position.y + avoidHeight, transform.position.z);
+            transform.position = Vector3.Lerp(transform.position, squeezePosition, avoidDirection.magnitude / minCollisionDistance);
         }
     }
 
@@ -87,7 +105,7 @@ public class FreeCamera : MonoBehaviour
         {
             targetPitch = 0;
             targetYaw = target.eulerAngles.y;
-        }        
+        }
     }
 
     //Get the near plane corners of the camera, relative to the camera's current transform.

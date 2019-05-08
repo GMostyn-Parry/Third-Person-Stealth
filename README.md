@@ -5,7 +5,7 @@ A basic "stealth" game demonstration project, using the Unity Engine, where the 
 - Two levels that are added additively to a main level that holds level-independent logic.
 - Buttons that can interacted with by the player when they are in-range.
 - Locked doors that are opened by pressing all linked buttons.
-- A camera that avoids collision with level geometry, although will shear the player.
+- A camera that avoids collision with level geometry, and the player, but lacks smoothing.
 ## Details
 **Author:** George Mostyn-Parry\
 **Finished:** 2019-05-03\
