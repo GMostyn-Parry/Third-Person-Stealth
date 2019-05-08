@@ -32,6 +32,7 @@ public class FreeCamera : MonoBehaviour
         collisionMask = ~LayerMask.GetMask("Ignore Raycast", "Player");
     }
 
+    //Update the camera's position, and rotation, after all of the other game objects have moved.
     private void LateUpdate()
     {
         //Don't move the camera, if the game is paused.
@@ -39,14 +40,10 @@ public class FreeCamera : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.Euler(targetPitch, targetYaw, 0);
 
-        //Using transform.right seems to cause camera stutter, so I recreate the vector with the rotation quaternion instead.
+        //Using transform.right will cause camera stutter, as the camera's transform.right changes at the end of this update, so I recreate the vector with the rotation quaternion instead.
         Vector3 desiredPosition = target.position + targetRotation * -Vector3.forward * radius + targetRotation * Vector3.right * offset.x + Vector3.up * offset.y;
 
-        //Set the camera to the position calculated before factoring collision.
-        transform.position = desiredPosition;
-        transform.LookAt(target.position + targetRotation * Vector3.forward * focusDistance);
-
-        Vector3[] nearFrustrumCorners = GetNearPlaneCorners();
+        Vector3[] nearFrustrumCorners = GetNearPlaneCorners(desiredPosition, targetRotation);
 
         //What we will subtract from the camera position to avoid shearing geometry.
         Vector3 avoidDirection = Vector3.zero;
@@ -80,14 +77,19 @@ public class FreeCamera : MonoBehaviour
         if(avoidDirection != Vector3.zero)
         {
             //We subtract because the linecasts were from the target to the camera corners, rather than vice versa.
-            transform.position -= avoidDirection;
+            desiredPosition -= avoidDirection;
 
             //We interpolate between the current height and the height to avoid shearing the target, based on how close we are to the colliding geometry.
-            Vector3 squeezePosition = new Vector3(transform.position.x, target.position.y + avoidHeight, transform.position.z);
-            transform.position = Vector3.Lerp(transform.position, squeezePosition, avoidDirection.magnitude / minCollisionDistance);
+            Vector3 squeezePosition = new Vector3(desiredPosition.x, target.position.y + avoidHeight, desiredPosition.z);
+            desiredPosition = Vector3.Lerp(desiredPosition, squeezePosition, avoidDirection.magnitude / minCollisionDistance);
         }
+
+        //Set the camera's transform with the calculated values.
+        transform.position = desiredPosition;
+        transform.LookAt(target.position + targetRotation * Vector3.forward * focusDistance);
     }
 
+    //Take input, and update the camera's state.
     private void Update()
     {
         //Don't take input, if the game is paused.
@@ -108,17 +110,18 @@ public class FreeCamera : MonoBehaviour
         }
     }
 
-    //Get the near plane corners of the camera, relative to the camera's current transform.
-    private Vector3[] GetNearPlaneCorners()
+    //Get the near plane corners of the camera, as if the camera's transform was set to the passed values.
+    private Vector3[] GetNearPlaneCorners(Vector3 cameraPosition, Quaternion rotation)
     {
         //Get an array of the near corners of the view frustrum.
         Vector3[] nearCorners = new Vector3[4];
         cameraComponent.CalculateFrustumCorners(new Rect(0, 0, 1, 1), cameraComponent.nearClipPlane, Camera.MonoOrStereoscopicEye.Mono, nearCorners);
 
-        //Transform the corners relative to the camera's current transform.
+        //Transform the corners relative to the camera's position, and rotation.
         for(int i = 0; i < nearCorners.Length; i++)
         {
-            nearCorners[i] = transform.TransformVector(nearCorners[i]) + transform.position;
+            nearCorners[i] = rotation * nearCorners[i];
+            nearCorners[i] += cameraPosition;
         }
 
         return nearCorners;
