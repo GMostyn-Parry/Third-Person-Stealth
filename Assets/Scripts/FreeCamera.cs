@@ -14,8 +14,8 @@ public class FreeCamera : MonoBehaviour
     public Vector2 offset = new Vector2(1, 1); //How much we want to offset the target from the centre of the view.
     public Vector2 mouseSensitivity = new Vector2(3, 2); //How fast the camera turns on mouse input.
 
-    [SerializeField] private readonly float collisionPadding = 0.1f; //How much clearance is added to avoid shearing geometry.
-    [SerializeField] private readonly float avoidHeight = 1.5f; //Height above the target's transform we move to, so we can avoid shearing the target when next to a wall.
+    [SerializeField] private float collisionPadding = 0.5f; //How much clearance is added to avoid shearing geometry.
+    [SerializeField] private float avoidHeight = 1.5f; //Height above the target's transform we move to, so we can avoid shearing the target when next to a wall.
 
     private float targetYaw; //The yaw of the camera the user has requested, and we are trying to match.
     private float targetPitch; //The pitch of the camera the user has requested, and we are trying to match.
@@ -45,31 +45,41 @@ public class FreeCamera : MonoBehaviour
 
         Vector3[] nearFrustrumCorners = GetNearPlaneCorners(desiredPosition, targetRotation);
 
-        //What we will subtract from the camera position to avoid shearing geometry.
+        //Direction we will move from the camera position to avoid shearing geometry.
         Vector3 avoidDirection = Vector3.zero;
-        //The smallest collision distance from target to any of the frustrum corners.
+        //The shortest collision distance from target to any of the frustrum corners.
         float minCollisionDistance = radius + 1;
+        //The magntiude of the vector the shortest distance was from.
+        float minCollisionMagnitude = 0;
 
-        //Find the mininimum collision distance,
-        //and set the travel direction to a vector made from the largest components out of all avoidance vectors for the corners.
+        //Find the mininimum collision distance, minimum collision magnitude,
+        //and set the travel direction to a vector made from the average of all avoidance vectors for the corners.
         foreach(Vector3 corner in nearFrustrumCorners)
         {
             //Only perform calculation if a collision occured; we travel from the target to the corner, rather that vice versa,
-            //as there won't be a collision if the starting point is inside the offending geometry.
+            //as cast don't collide with meshes that overlap the starting point.
             if(Physics.Linecast(target.position, corner, out RaycastHit hit, collisionMask))
             {
-                //Vector difference between corner and the target's position.
-                Vector3 cornerDifference = corner - target.position;
-                //How much we need to move the camera along the vector difference to avoid shearing geometry.
-                Vector3 collisionAvoid = cornerDifference.normalized * (cornerDifference.magnitude - hit.distance + collisionPadding);
+                //Vector difference from the target to the view frustrum corner.
+                Vector3 vectorDifference = corner - target.position;
 
-                //Replace any component in avoidDirection that is smaller than the current avoidance vector.
-                if(Mathf.Abs(collisionAvoid.x) > Mathf.Abs(avoidDirection.x)) avoidDirection.x = collisionAvoid.x;
-                if(Mathf.Abs(collisionAvoid.y) > Mathf.Abs(avoidDirection.y)) avoidDirection.y = collisionAvoid.y;
-                if(Mathf.Abs(collisionAvoid.z) > Mathf.Abs(avoidDirection.z)) avoidDirection.z = collisionAvoid.z;
+                //Set the avoidance direction to the vector difference, if there was no prior collision.
+                if(minCollisionDistance == radius + 1)
+                {
+                    avoidDirection = vectorDifference;
+                }
+                //Otherwise, average the new vector difference into the avoidance direction.
+                else
+                {
+                    avoidDirection = (avoidDirection + vectorDifference) / 2f;
+                }
 
-                //Update minCollisionDistance if the new hit distance was smaller than the current value.
-                if(hit.distance < minCollisionDistance) minCollisionDistance = hit.distance;
+                //Assign this collision distance as the new shortest collision distance, if this collision happened at a shorter distance than any other.
+                if(hit.distance < minCollisionDistance)
+                {
+                    minCollisionDistance = hit.distance;
+                    minCollisionMagnitude = vectorDifference.magnitude;
+                }
             }
         }
 
@@ -77,7 +87,7 @@ public class FreeCamera : MonoBehaviour
         if(avoidDirection != Vector3.zero)
         {
             //We subtract because the linecasts were from the target to the camera corners, rather than vice versa.
-            desiredPosition -= avoidDirection;
+            desiredPosition -= avoidDirection.normalized * (minCollisionMagnitude - minCollisionDistance + collisionPadding);
 
             //We interpolate between the current height and the height to avoid shearing the target, based on how close we are to the colliding geometry.
             Vector3 squeezePosition = new Vector3(desiredPosition.x, target.position.y + avoidHeight, desiredPosition.z);
