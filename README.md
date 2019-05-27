@@ -7,7 +7,7 @@ A basic "stealth" game demonstration project, using the Unity Engine, where the 
 - Buttons that can interacted with by the player when they are in-range.
 - Locked doors that are opened by pressing all linked buttons.
 ## Demonstration Video
-To be uploaded; by 2019-05-15.
+https://youtu.be/jDWT_zdZE28
 ## Details
 **Author:** George Mostyn-Parry\
 **Finished:** 2019-05-03\
